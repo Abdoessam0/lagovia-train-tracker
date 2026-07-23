@@ -1,6 +1,8 @@
 import cors from "cors";
 import express from "express";
 
+import departuresRouter from "./routes/departures.routes.js";
+
 const app = express();
 
 app.use(cors());
@@ -12,5 +14,7 @@ app.get("/health", (_req, res) => {
     service: "lagovia-train-tracker-api",
   });
 });
+
+app.use("/api/departures", departuresRouter);
 
 export default app;
