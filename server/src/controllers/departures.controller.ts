@@ -38,7 +38,7 @@ export async function getDepartures(
     return res.status(502).json({
       error: {
         code: "UPSTREAM_API_ERROR",
-        message: "Station information is temporarily unavailable.",
+        message: "Train information is temporarily unavailable.",
       },
     });
   }
