@@ -33,7 +33,7 @@ export async function getDepartures(
 
     return res.status(200).json(result);
   } catch (error) {
-    console.error("Failed to load iRail stations:", error);
+    console.error("Failed to load departures:", error);
 
     return res.status(502).json({
       error: {

@@ -51,7 +51,7 @@ describe("Express endpoints", () => {
   it("rejects a departure query shorter than three characters", async () => {
     const response = await request(app)
       .get("/api/departures")
-      .query({ q: "Br" });
+      .query({ q: " Br " });
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({
@@ -96,7 +96,7 @@ describe("Express endpoints", () => {
 
     const response = await request(app)
       .get("/api/departures")
-      .query({ q: "Bru" });
+      .query({ q: "  Bru  " });
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual(serviceResult);
@@ -104,5 +104,32 @@ describe("Express endpoints", () => {
     expect(mockedGetDeparturesForQuery).toHaveBeenCalledWith(
       "Bru",
     );
+  });
+
+  it("returns 502 when every matching Liveboard request fails", async () => {
+    mockedGetDeparturesForQuery.mockRejectedValue(
+      new Error("All iRail Liveboard requests failed."),
+    );
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const response = await request(app)
+      .get("/api/departures")
+      .query({ q: "Bru" });
+
+    expect(response.status).toBe(502);
+    expect(response.body).toEqual({
+      error: {
+        code: "UPSTREAM_API_ERROR",
+        message:
+          "Train information is temporarily unavailable.",
+      },
+    });
+  });
+
+  it("does not expose a public station autocomplete endpoint", async () => {
+    const response = await request(app).get("/api/stations");
+
+    expect(response.status).toBe(404);
+    expect(mockedGetDeparturesForQuery).not.toHaveBeenCalled();
   });
 });

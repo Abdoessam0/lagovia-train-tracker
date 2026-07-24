@@ -10,8 +10,20 @@ const STATIONS_URL =
   "https://api.irail.be/stations/?format=json&lang=en";
 
 const LIVEBOARD_URL = "https://api.irail.be/liveboard/";
+const LIVEBOARD_CACHE_TTL_MS = 12_000;
 
 let cachedStations: IRailStation[] | null = null;
+
+interface LiveboardCacheEntry {
+  result: IRailLiveboardResult;
+  expiresAt: number;
+}
+
+const liveboardCache = new Map<string, LiveboardCacheEntry>();
+const liveboardRequests = new Map<
+  string,
+  Promise<IRailLiveboardResult>
+>();
 
 export async function getStations(): Promise<IRailStation[]> {
   if (cachedStations !== null) {
@@ -45,7 +57,7 @@ export async function getStations(): Promise<IRailStation[]> {
   return cachedStations;
 }
 
-export async function getLiveboardForStation(
+async function fetchLiveboardForStation(
   stationId: string,
 ): Promise<IRailLiveboardResult> {
   const url = new URL(LIVEBOARD_URL);
@@ -109,4 +121,43 @@ export async function getLiveboardForStation(
     stationName: data.station,
     departures: rawDepartures as IRailDeparture[],
   };
+}
+
+export async function getLiveboardForStation(
+  stationId: string,
+): Promise<IRailLiveboardResult> {
+  const cached = liveboardCache.get(stationId);
+
+  if (cached !== undefined) {
+    if (cached.expiresAt > Date.now()) {
+      return cached.result;
+    }
+
+    liveboardCache.delete(stationId);
+  }
+
+  const inFlightRequest = liveboardRequests.get(stationId);
+
+  if (inFlightRequest !== undefined) {
+    return inFlightRequest;
+  }
+
+  const request = fetchLiveboardForStation(stationId)
+    .then((result) => {
+      liveboardCache.set(stationId, {
+        result,
+        expiresAt: Date.now() + LIVEBOARD_CACHE_TTL_MS,
+      });
+
+      return result;
+    })
+    .finally(() => {
+      if (liveboardRequests.get(stationId) === request) {
+        liveboardRequests.delete(stationId);
+      }
+    });
+
+  liveboardRequests.set(stationId, request);
+
+  return request;
 }

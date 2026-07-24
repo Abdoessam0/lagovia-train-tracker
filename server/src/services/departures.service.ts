@@ -21,6 +21,7 @@ function wait(milliseconds: number): Promise<void> {
 export async function getDeparturesForQuery(
   query: string,
 ): Promise<DeparturesSearchResult> {
+  const nowMs = Date.now();
   const stations = await getStations();
   const normalizedQuery = query.toLowerCase();
 
@@ -41,7 +42,6 @@ export async function getDeparturesForQuery(
       ),
     );
 
-  const nowMs = Date.now();
   const stationResults: StationDepartures[] = [];
   const warnings: string[] = [];
 
