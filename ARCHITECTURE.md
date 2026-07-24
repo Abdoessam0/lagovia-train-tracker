@@ -1,139 +1,100 @@
 # Lagovia Train Tracker Architecture
 
-## Stack
+## System Boundary
 
-* React with TypeScript
-* Node.js with Express and TypeScript
-* iRail API
-
-## Data Flow
-
-User → React → Express → iRail → Express filtering → React
-
-## Public Endpoint
+Lagovia has one public feature endpoint:
 
 ```http
 GET /api/departures?q=Bru
 ```
 
-## Responsibilities
-
-### React
-
-React handles the user interface.
-
-It allows the user to:
-
-* Enter part of a Belgian station name.
-* Submit the search.
-* See a loading state.
-* See error and empty-result messages.
-* View departures grouped by station.
-
-### Express
-
-Express handles the application logic.
-
-It is responsible for:
-
-* Validating the search query.
-* Rejecting queries shorter than three characters.
-* Fetching the station list from iRail.
-* Finding all stations whose names contain the search text.
-* Fetching departures for every matched station.
-* Filtering departures scheduled within the next 15 minutes.
-* Converting iRail data into a consistent JSON response.
-* Handling external API and server errors.
-
-### iRail
-
-iRail provides:
-
-* Belgian railway station information.
-* Live departure information.
-* Train numbers.
-* Destinations.
-* Scheduled departure times.
-* Delays.
-* Cancellation status.
-
-## Departure Time Window
-
-The backend records the current time when it receives the request.
-
-It calculates the end of the time window by adding 15 minutes.
-
-```ts
-const FIFTEEN_MINUTES_IN_MS = 15 * 60 * 1000;
-
-const now = Date.now();
-const windowEnd = now + FIFTEEN_MINUTES_IN_MS;
-```
-
-iRail departure timestamps use seconds, while JavaScript `Date.now()` uses milliseconds.
-
-The iRail timestamp must therefore be multiplied by `1000`.
-
-```ts
-const departureTime = Number(departure.time) * 1000;
-```
-
-A departure is included when its scheduled time is between the current time and the end of the 15-minute window.
-
-```ts
-const isInsideWindow =
-  departureTime >= now &&
-  departureTime <= windowEnd;
-```
+`GET /health` is a technical process check. There is no public station, search, or autocomplete endpoint.
 
 ## Request Flow
 
-1. The user enters at least three characters.
-2. React sends a request to Express.
-3. Express validates the query.
-4. Express gets the Belgian station list from iRail.
-5. Express finds every matching station.
-6. Express gets departures for each matching station.
-7. Express keeps departures scheduled within the next 15 minutes.
-8. Express returns normalized JSON.
-9. React displays the results grouped by station.
-
-## Proposed Response
-
-```json
-{
-  "query": "Bru",
-  "generatedAt": "2026-07-22T18:30:00.000Z",
-  "windowMinutes": 15,
-  "stations": [
-    {
-      "id": "BE.NMBS.008814001",
-      "name": "Brussels-South",
-      "departures": [
-        {
-          "trainNumber": "IC3033",
-          "destination": "Antwerp-Central",
-          "scheduledDepartureTime": "2026-07-22T18:40:00.000Z",
-          "delayMinutes": 5,
-          "cancelled": false
-        }
-      ]
-    }
-  ],
-  "totalStations": 1,
-  "totalDepartures": 1
-}
+```text
+React form
+  -> GET /api/departures
+  -> Express route
+  -> departures controller
+  -> departures service
+  -> cached iRail station list
+  -> batched iRail Liveboard requests
+  -> scheduled-time filtering
+  -> normalized station groups
+  -> React departure board
 ```
 
-## Error Cases
+The controller trims and validates `q`. The departures service captures one `nowMs` at the start of each valid request, matches every station whose English or standard name contains the substring, and filters all successful Liveboards against that shared clock.
 
-The application handles:
+## Frontend Search Paths
 
-* Missing search queries.
-* Queries shorter than three characters.
-* No matching stations.
-* Stations with no departures during the next 15 minutes.
-* iRail connection failures.
-* iRail request timeouts.
-* Invalid data returned by iRail.
-* Unexpected internal server errors.
+Autocomplete is entirely local:
+
+```text
+Input with 3+ characters
+  -> bundled station data
+  -> case-insensitive substring matches
+  -> up to eight suggestions
+```
+
+Typing never calls the backend. Selecting a suggestion requests that station through `/api/departures`. Submitting typed text such as `Bru` sends the full substring so the backend processes every matching station.
+
+## Time Window and Normalization
+
+iRail timestamps are expressed in seconds. Lagovia converts them to milliseconds and includes a departure when:
+
+```ts
+departureTimeMs >= nowMs &&
+departureTimeMs <= nowMs + 15 * 60 * 1000
+```
+
+Both interval boundaries are inclusive. Each normalized departure contains:
+
+- `trainNumber`
+- `destination`
+- `scheduledDepartureTime`
+- `delayMinutes`
+- `cancelled`
+
+Its origin is supplied by the containing `stationId` and `stationName` group.
+
+## Upstream Work and Failures
+
+Matching stations are processed in batches of three, with a short delay between batches to protect the public iRail service.
+
+Each batch uses `Promise.allSettled`:
+
+- successful Liveboards are normalized and returned
+- failed Liveboards produce warnings
+- the response sets `partial` when some stations fail
+- the request fails with HTTP `502` when every matching Liveboard fails
+
+No matches are a successful empty result.
+
+## Caching
+
+The station list is cached in memory because it changes infrequently.
+
+Raw iRail Liveboard results are cached per station for 12 seconds. Concurrent requests for the same uncached station share one in-flight Promise, which is removed after success or failure.
+
+The normalized `/api/departures` response is never cached. Every request:
+
+1. captures a fresh `nowMs`
+2. matches stations again
+3. filters cached or fresh raw Liveboard data again
+4. recalculates station and departure totals
+5. produces a new `generatedAt`
+
+This keeps the 15-minute window accurate while limiting redundant upstream traffic.
+
+## Main Modules
+
+- `server/src/routes/departures.routes.ts` - feature route
+- `server/src/controllers/departures.controller.ts` - validation and HTTP responses
+- `server/src/services/departures.service.ts` - matching, batching, partial failures, totals
+- `server/src/services/irail.service.ts` - iRail calls and raw caches
+- `server/src/utils/departure.utils.ts` - filtering and normalization
+- `client/src/services/stationAutocomplete.ts` - bundled local suggestions
+- `client/src/services/departuresApi.ts` - the only frontend feature API call
+- `client/src/App.tsx` - search state, request lifecycle, and result composition
