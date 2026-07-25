@@ -1,36 +1,52 @@
 # Lagovia Train Tracker
 
-## Overview
+A full-stack Belgian railway departure tracker built for the DPS technical challenge.
 
-Lagovia Train Tracker is a full-stack railway information application built for the DPS technical challenge. A user enters part of a Belgian station name, and the application returns departures scheduled within the next 15 minutes from every station whose English or standard name contains that substring.
-
-The React frontend consumes a single Express feature endpoint. The backend retrieves live station and departure data from the public [iRail API](https://docs.irail.be/), filters it against one shared request timestamp, and returns normalized results grouped by origin station.
+Users can enter part of a station name and view trains scheduled to depart within the next 15 minutes from every matching station. The React frontend consumes one Express feature endpoint, while the backend retrieves and normalizes live timetable data from the public iRail API.
 
 ## Live Demo
 
-- Frontend: https://lagovia-train-tracker.vercel.app
-- Backend API: https://lagovia-train-tracker-api.vercel.app
-- Health Check: https://lagovia-train-tracker-api.vercel.app/health
-- Example Search: https://lagovia-train-tracker-api.vercel.app/api/departures?q=Bru
+- **Frontend:** https://lagovia-train-tracker.vercel.app
+- **Backend API:** https://lagovia-train-tracker-api.vercel.app
+- **Health check:** https://lagovia-train-tracker-api.vercel.app/health
+- **Example search:** https://lagovia-train-tracker-api.vercel.app/api/departures?q=Bru
+
+## Application Preview
+
+### Live Departures
+
+![Lagovia live departure results](docs/screenshots/live-departures.png)
+
+### Station Autocomplete
+
+![Lagovia station autocomplete](docs/screenshots/station-autocomplete.png)
+
+### Search Validation
+
+![Lagovia search validation message](docs/screenshots/validation-error.png)
+
+### Initial Search
+
+![Lagovia initial search screen](docs/screenshots/initial-search.png)
 
 ## Features
 
-- Case-insensitive substring station search
-- Local, accessible station autocomplete backed by bundled frontend data
-- Departure results grouped by origin station
-- Delay and cancellation display
-- Inclusive scheduled-time window from now through the next 15 minutes
-- Partial upstream failure handling with successful results and warnings
+- Case-insensitive substring search across Belgian station names
+- Local, keyboard-accessible station autocomplete
+- Departures grouped by origin station
+- Inclusive 15-minute scheduled-departure window
+- Train number, destination, scheduled time, delay, and cancellation status
+- Partial upstream-failure handling with warnings
 - Raw iRail Liveboard caching for 12 seconds
-- In-flight request deduplication and controlled iRail request batching
-- Responsive React interface with 24-hour timetable display
-- Automated backend, service, cache, and client-search tests
+- In-flight request deduplication and controlled request batching
+- Responsive railway-board interface using 24-hour time
+- Automated endpoint, service, cache, utility, and configuration tests
 
 ## Tech Stack
 
 ### Backend
 
-- Node.js
+- Node.js 22
 - Express
 - TypeScript
 - Vitest
@@ -43,140 +59,132 @@ The React frontend consumes a single Express feature endpoint. The backend retri
 - Vite
 - CSS
 
-### External data source
+### External Data Source
 
-- iRail API
+- [iRail API](https://docs.irail.be/)
 
 ## Project Structure
 
-```
+```text
 lagovia-train-tracker/
-|-- client/
-|   |-- public/                 # Static browser assets
-|   `-- src/
-|       |-- components/         # Departure-board UI components
-|       |-- data/               # Bundled autocomplete station data
-|       |-- services/           # Local autocomplete and API calls
-|       `-- types/              # Frontend response and station types
-|-- server/
-|   |-- src/
-|   |   |-- controllers/        # HTTP validation and responses
-|   |   |-- routes/             # Express route definitions
-|   |   |-- services/           # Search orchestration and iRail access
-|   |   |-- types/              # Application and iRail types
-|   |   `-- utils/              # Time-window filtering and normalization
-|   `-- tests/                  # Endpoint, service, cache, and utility tests
-|-- ARCHITECTURE.md
-`-- README.md
+├── client/
+│   ├── public/
+│   └── src/
+│       ├── components/         # Departure-board UI components
+│       ├── data/               # Bundled autocomplete station data
+│       ├── services/           # Local autocomplete and API requests
+│       └── types/              # Frontend response and station types
+├── server/
+│   ├── src/
+│   │   ├── controllers/        # HTTP validation and responses
+│   │   ├── routes/             # Express route definitions
+│   │   ├── services/           # Search orchestration and iRail access
+│   │   ├── types/              # Application and iRail types
+│   │   └── utils/              # Filtering and normalization helpers
+│   └── tests/                  # Endpoint, service, cache, and utility tests
+├── docs/
+│   └── screenshots/
+├── AI_USAGE.md
+├── ARCHITECTURE.md
+└── README.md
 ```
 
-Generated output and dependencies are intentionally excluded from Git.
+Generated output, dependencies, local environment files, and temporary files are excluded from Git.
 
 ## Prerequisites
 
 - Node.js 22
 - npm
 
-Node.js 22 is the supported and verified development environment for this submission.
-
 ## Installation
 
-From a new clone:
+Clone the repository:
 
-```
+```bash
 git clone https://github.com/Abdoessam0/lagovia-train-tracker.git
 cd lagovia-train-tracker
 ```
 
-Install the backend:
+Install backend dependencies:
 
-```
+```bash
 cd server
 npm ci
 ```
 
-Install the frontend:
+Install frontend dependencies:
 
-```
+```bash
 cd ../client
 npm ci
 ```
 
 ## Running Locally
 
-Start the backend in terminal 1:
+Start the backend in the first terminal:
 
-```
+```bash
 cd server
 npm run dev
 ```
 
-Start the frontend in terminal 2:
+Start the frontend in a second terminal:
 
-```
+```bash
 cd client
 npm run dev
 ```
 
-Local addresses:
+Local URLs:
 
-- Frontend: [http://localhost:5173](http://localhost:5173)
-- Backend: [http://localhost:3000](http://localhost:3000)
-- Health check: [http://localhost:3000/health](http://localhost:3000/health)
+- Frontend: http://localhost:5173
+- Backend: http://localhost:3000
+- Health check: http://localhost:3000/health
 
-## Deployment
+## Environment Variables
 
-Deploy the repository as two independent Vercel projects.
+Create local `.env` files from the committed examples when needed.
 
-The current production deployment uses `https://lagovia-train-tracker.vercel.app` for the frontend and `https://lagovia-train-tracker-api.vercel.app` for the backend API.
+### Frontend
 
-### Backend project
+```env
+VITE_API_BASE_URL=http://localhost:3000
+```
 
-1. Import this GitHub repository into Vercel.
-2. Set the Root Directory to `server`.
-3. Keep the auto-detected Express settings; no `vercel.json`, custom build command, or output directory is required.
-4. Set `CORS_ORIGIN=https://<frontend-project>.vercel.app`.
-5. Deploy the project.
+### Backend
 
-### Frontend project
+```env
+PORT=3000
+CORS_ORIGIN=http://localhost:5173
+```
 
-1. Import the same GitHub repository as a second Vercel project.
-2. Set the Root Directory to `client` and the Framework Preset to Vite.
-3. Use Install Command `npm ci`, Build Command `npm run build`, and Output Directory `dist`.
-4. Set `VITE_API_BASE_URL=https://<backend-project>.vercel.app`.
-5. Deploy the project.
-
-After the first deployments, replace the placeholder values with the real deployed production URLs and redeploy both projects. The frontend URL belongs in the backend's `CORS_ORIGIN`; the backend URL belongs in the frontend's `VITE_API_BASE_URL`.
-
-Vercel preview deployments use changing origins. Add each frontend preview origin that needs API access to `CORS_ORIGIN` as a comma-separated explicit URL, then redeploy the backend. Do not use a wildcard origin.
+Real `.env` files must not be committed.
 
 ## API
 
-### Departures
+### Search Departures
 
-```
+```http
 GET /api/departures?q=Bru
 ```
 
-`q` is required. After surrounding whitespace is trimmed, it must contain at least three characters. The search is case-insensitive and matches substrings in both the English station name and iRail standard name.
+The `q` parameter is required. After whitespace is trimmed, it must contain at least three characters. Matching is case-insensitive and checks both the English station name and the iRail standard name.
 
-This is the application's only public feature endpoint. Autocomplete is local to the frontend and does not use a station, search, or autocomplete API route.
+This is the application's only public feature endpoint. Autocomplete runs locally in the frontend and does not use an additional station or search endpoint.
 
-#### HTTP statuses
+### HTTP Statuses
 
+| Status | Meaning |
+|---|---|
+| `200` | Search completed, including empty or partially successful results |
+| `400` | Query is missing or shorter than three trimmed characters |
+| `502` | The station source failed, or every matching Liveboard request failed |
 
-| Status | Meaning                                                               |
-| ------ | --------------------------------------------------------------------- |
-| `200`  | Search completed, including empty or partially successful results     |
-| `400`  | Query is missing or shorter than three trimmed characters             |
-| `502`  | The station source failed, or every matching Liveboard request failed |
+### Example Success Response
 
+The values below demonstrate the response shape and are not fixed live timetable data.
 
-#### Sample success response
-
-Values below illustrate the response shape and are not fixed live timetable data.
-
-```
+```json
 {
   "query": "Bru",
   "generatedAt": "2026-07-24T18:00:00.000Z",
@@ -204,13 +212,11 @@ Values below illustrate the response shape and are not fixed live timetable data
 }
 ```
 
-#### Missing query
+### Validation Errors
 
-```
-GET /api/departures
-```
+Missing query:
 
-```
+```json
 {
   "error": {
     "code": "QUERY_REQUIRED",
@@ -219,13 +225,9 @@ GET /api/departures
 }
 ```
 
-#### Short query
+Query shorter than three characters:
 
-```
-GET /api/departures?q=Br
-```
-
-```
+```json
 {
   "error": {
     "code": "QUERY_TOO_SHORT",
@@ -234,11 +236,11 @@ GET /api/departures?q=Br
 }
 ```
 
-#### Upstream API failure
+### Upstream Failure
 
 If the station request fails, or every matching Liveboard request fails:
 
-```
+```json
 {
   "error": {
     "code": "UPSTREAM_API_ERROR",
@@ -247,88 +249,89 @@ If the station request fails, or every matching Liveboard request fails:
 }
 ```
 
-#### No matching stations
+### Health Check
 
-A completed search with no station matches returns HTTP `200`:
-
-```
-{
-  "query": "NoSuchStation",
-  "generatedAt": "2026-07-24T18:00:00.000Z",
-  "windowMinutes": 15,
-  "totalMatchedStations": 0,
-  "totalReturnedStations": 0,
-  "totalDepartures": 0,
-  "partial": false,
-  "warnings": [],
-  "stations": []
-}
-```
-
-#### Successful partial results
-
-When some matching Liveboards fail, successful station results are still returned with HTTP `200`:
-
-```
-{
-  "query": "Bru",
-  "generatedAt": "2026-07-24T18:00:00.000Z",
-  "windowMinutes": 15,
-  "totalMatchedStations": 2,
-  "totalReturnedStations": 1,
-  "totalDepartures": 0,
-  "partial": true,
-  "warnings": [
-    "Departures could not be loaded for Brussels-West."
-  ],
-  "stations": [
-    {
-      "stationId": "BE.NMBS.008813003",
-      "stationName": "Brussels-Central",
-      "departures": []
-    }
-  ]
-}
-```
-
-### Health check
-
-```
+```http
 GET /health
 ```
 
 This technical endpoint reports that the Express process is available. It does not call iRail.
 
-## Response Field Explanations
+## Response Fields
 
+| Field | Description |
+|---|---|
+| `query` | The trimmed substring processed by the backend |
+| `generatedAt` | ISO timestamp based on the single shared request time |
+| `windowMinutes` | Scheduled-departure window length, currently `15` |
+| `totalMatchedStations` | Number of station names matching the substring |
+| `totalReturnedStations` | Number of matching stations whose Liveboards succeeded |
+| `totalDepartures` | Sum of all filtered departure arrays |
+| `partial` | `true` when at least one Liveboard failed and another succeeded |
+| `warnings` | Messages describing Liveboards that could not be loaded |
+| `stations` | Successful origin-station groups |
+| `stationId` | iRail identifier for the origin station |
+| `stationName` | Display name for the origin station |
+| `departures` | Departures scheduled inside the inclusive request window |
+| `trainNumber` | Normalized train short name or number |
+| `destination` | Destination station name |
+| `scheduledDepartureTime` | Scheduled departure as an ISO timestamp |
+| `delayMinutes` | iRail delay converted from seconds to minutes |
+| `cancelled` | Normalized cancellation boolean |
 
-|                          |                                                                          |
-| ------------------------ | ------------------------------------------------------------------------ |
-| Field                    | Description                                                              |
-| `query`                  | The trimmed substring processed by the backend                           |
-| `generatedAt`            | ISO timestamp for the single `now` value shared by the request           |
-| `windowMinutes`          | Scheduled-departure window length, currently `15`                        |
-| `totalMatchedStations`   | Number of station names matching the substring                           |
-| `totalReturnedStations`  | Number of matching stations whose Liveboards succeeded                   |
-| `totalDepartures`        | Sum of all filtered departure arrays                                     |
-| `partial`                | `true` when at least one matching Liveboard failed but another succeeded |
-| `warnings`               | Human-readable messages for station Liveboards that failed               |
-| `stations`               | Successful station groups, sorted by station name                        |
-| `stationId`              | iRail identifier for the origin station                                  |
-| `stationName`            | Display name for the origin station                                      |
-| `departures`             | Departures scheduled within the inclusive request window                 |
-| `trainNumber`            | Normalized iRail vehicle short name or number                            |
-| `destination`            | Destination station name                                                 |
-| `scheduledDepartureTime` | Scheduled departure as an ISO timestamp                                  |
-| `delayMinutes`           | iRail delay converted from seconds to rounded minutes                    |
-| `cancelled`              | Normalized cancellation boolean                                          |
+## Architecture and Request Flow
 
+```text
+React search
+  → Express route
+  → departures controller
+  → departures service
+  → cached iRail station list
+  → batched iRail Liveboards
+  → inclusive 15-minute filter
+  → normalized grouped response
+  → React departure board
+```
+
+Autocomplete follows a separate local flow:
+
+```text
+Typed characters
+  → bundled station data
+  → up to eight suggestions
+  → selected station or explicit form submission
+  → /api/departures
+```
+
+Typing alone does not start the full departure search.
+
+## Key Decisions
+
+- **Route → Controller → Service separation:** routing remains small, HTTP validation stays in the controller, and search orchestration lives in the service.
+- **Normalized application data:** the frontend receives a stable model rather than raw iRail fields.
+- **One shared `nowMs` per request:** all stations are filtered against the same inclusive interval.
+- **`Promise.allSettled` within batches:** one failed Liveboard does not discard successful station results.
+- **Batches of three Liveboard requests:** broad searches remain controlled and respectful of the upstream service.
+- **Raw Liveboard caching for 12 seconds:** repeated calls reduce upstream work without caching the final filtered response.
+- **In-flight Promise deduplication:** concurrent requests for the same station share one upstream request.
+- **Local autocomplete:** typing remains responsive while preserving a single public feature endpoint.
+- **24-hour time:** railway departures are easier to scan without AM/PM ambiguity.
+
+## Trade-offs and Known Limitations
+
+- Bundled autocomplete data can become stale until the frontend dataset is refreshed.
+- The autocomplete dataset increases the frontend bundle size.
+- Raw Liveboard data can be up to 12 seconds old.
+- Broad substring queries can take longer because every matching station must be processed.
+- In-memory caches are not shared between server instances and reset when an instance restarts.
+- Search uses substring matching rather than fuzzy matching because core requirements were prioritized.
+- Vercel uses separate frontend and backend projects connected through environment variables.
 
 ## Testing
 
 Backend:
 
-```
+```bash
 cd server
 npm test
 npm run typecheck
@@ -337,70 +340,46 @@ npm run build
 
 Frontend:
 
-```
+```bash
 cd client
 npm run lint
 npx --no-install tsc -b
 npm run build
 ```
 
-## Architecture and Request Flow
+## Deployment
 
-```
-React search
-  -> Express route
-  -> departures controller
-  -> departures service
-  -> cached iRail station list
-  -> batched iRail Liveboards
-  -> inclusive 15-minute filter
-  -> normalized grouped JSON
-  -> React departure board
-```
+The repository is deployed as two Vercel projects.
 
-The frontend autocomplete is a separate local path:
+### Production Configuration
 
-```
-Typed characters -> bundled station data -> up to eight suggestions
-```
+Backend project:
 
-Typing does not start the full departure search. Selecting a station or explicitly submitting the form uses the existing `/api/departures` endpoint.
+- Root Directory: `server`
+- Framework: Express
+- `CORS_ORIGIN=https://lagovia-train-tracker.vercel.app`
 
-## Key Decisions
+Frontend project:
 
-- **Route -> Controller -> Service separation:** routing remains small, HTTP validation stays in the controller, and search orchestration lives in the service.
-- **Normalized application data:** the frontend receives a stable, documented model rather than raw iRail response fields.
-- **One shared** `nowMs` **per request:** every station is filtered against the same inclusive interval.
-- `Promise.allSettled` **for each batch:** one failed Liveboard does not discard successful station results.
-- **Batches of three Liveboard requests:** broad substring searches respect iRail's public rate limits, with a short delay between batches.
-- **Raw Liveboard caching for 12 seconds:** repeated calls avoid unnecessary upstream work without caching filtered application results.
-- **In-flight Promise deduplication:** concurrent requests for the same station share one Liveboard request, and the Promise is removed after settlement.
-- **Local autocomplete:** bundled station data keeps typing responsive while preserving one public feature endpoint.
-- **24-hour timetable display:** times use an explicit `h23` hour cycle for railway-style scanning.
+- Root Directory: `client`
+- Framework: Vite
+- `VITE_API_BASE_URL=https://lagovia-train-tracker-api.vercel.app`
 
-## Trade-offs and Known Limitations
-
-- Bundled station suggestion data can become stale until the frontend data file is refreshed.
-- The autocomplete dataset increases the frontend bundle size.
-- Raw Liveboard data can be up to 12 seconds old.
-- Broad substring queries can be slower because every matching station is processed while respecting iRail limits.
-- Caches are in memory, so state is not shared across multiple server processes and resets when the process restarts.
-- Search is substring-based rather than fuzzy because fuzzy matching was a bonus and the core requirements were prioritized.
-- Vercel deployment uses separate frontend and backend projects whose URLs must be connected through environment variables.
+No real environment files or secrets are committed.
 
 ## Accessibility
 
-- The search input has an associated label and descriptive guidance.
-- Autocomplete supports Arrow Up, Arrow Down, Enter, and Escape.
-- Interactive elements have visible focus states.
-- Loading and error feedback use live regions.
-- Headings, station sections, and departure rows expose semantic structure.
-- Status is communicated with text as well as color.
-- The mobile layout avoids horizontal overflow.
+- Associated label and guidance for the station input
+- Arrow Up, Arrow Down, Enter, and Escape support in autocomplete
+- Visible keyboard focus states
+- Live regions for loading and error feedback
+- Semantic headings and grouped result sections
+- Text labels in addition to status colors
+- Responsive layout without document-level horizontal overflow
 
 ## AI Usage
 
-See [AI_USAGE.md](AI_USAGE.md) for the required transparent account of AI-assisted work, representative prompts, review decisions, and verification.
+See [AI_USAGE.md](AI_USAGE.md) for the required transparent summary of AI-assisted learning, review, selected prompts, decisions, and verification.
 
 ## Data Attribution
 
