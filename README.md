@@ -128,6 +128,8 @@ Local addresses:
 
 Deploy the repository as two independent Vercel projects.
 
+The current production deployment uses `https://lagovia-train-tracker.vercel.app` for the frontend and `https://lagovia-train-tracker-api.vercel.app` for the backend API.
+
 ### Backend project
 
 1. Import this GitHub repository into Vercel.

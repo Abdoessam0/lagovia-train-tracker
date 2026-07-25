@@ -17,6 +17,7 @@ It helped with:
 - generating limited project boilerplate
 - suggesting automated test cases
 - reviewing accessibility and frontend styling
+- reviewing Vercel deployment configuration
 - checking task compliance and documentation
 
 ## My Contribution and Ownership
