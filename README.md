@@ -117,6 +117,30 @@ Local addresses:
 - Backend: [http://localhost:3000](http://localhost:3000)
 - Health check: [http://localhost:3000/health](http://localhost:3000/health)
 
+## Deployment
+
+Deploy the repository as two independent Vercel projects.
+
+### Backend project
+
+1. Import this GitHub repository into Vercel.
+2. Set the Root Directory to `server`.
+3. Keep the auto-detected Express settings; no `vercel.json`, custom build command, or output directory is required.
+4. Set `CORS_ORIGIN=https://<frontend-project>.vercel.app`.
+5. Deploy the project.
+
+### Frontend project
+
+1. Import the same GitHub repository as a second Vercel project.
+2. Set the Root Directory to `client` and the Framework Preset to Vite.
+3. Use Install Command `npm ci`, Build Command `npm run build`, and Output Directory `dist`.
+4. Set `VITE_API_BASE_URL=https://<backend-project>.vercel.app`.
+5. Deploy the project.
+
+After the first deployments, replace the placeholder values with the real deployed production URLs and redeploy both projects. The frontend URL belongs in the backend's `CORS_ORIGIN`; the backend URL belongs in the frontend's `VITE_API_BASE_URL`.
+
+Vercel preview deployments use changing origins. Add each frontend preview origin that needs API access to `CORS_ORIGIN` as a comma-separated explicit URL, then redeploy the backend. Do not use a wildcard origin.
+
 ## API
 
 ### Departures
@@ -353,8 +377,7 @@ Typing does not start the full departure search. Selecting a station or explicit
 - Broad substring queries can be slower because every matching station is processed while respecting iRail limits.
 - Caches are in memory, so state is not shared across multiple server processes and resets when the process restarts.
 - Search is substring-based rather than fuzzy because fuzzy matching was a bonus and the core requirements were prioritized.
-- The frontend API address is configured for local development.
-- No deployment is included because the challenge requires a public repository, not a hosted application.
+- Vercel deployment uses separate frontend and backend projects whose URLs must be connected through environment variables.
 
 ## Accessibility
 

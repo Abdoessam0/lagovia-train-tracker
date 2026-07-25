@@ -11,7 +11,7 @@ vi.mock("../src/services/departures.service.js", () => ({
   getDeparturesForQuery: vi.fn(),
 }));
 
-import app from "../src/app.js";
+import app, { createApp } from "../src/app.js";
 import { getDeparturesForQuery } from "../src/services/departures.service.js";
 
 const mockedGetDeparturesForQuery = vi.mocked(
@@ -31,6 +31,61 @@ describe("Express endpoints", () => {
       status: "ok",
       service: "lagovia-train-tracker-api",
     });
+  });
+
+  it("allows the local frontend origin by default", async () => {
+    const response = await request(createApp())
+      .get("/health")
+      .set("Origin", "http://localhost:5173");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["access-control-allow-origin"]).toBe(
+      "http://localhost:5173",
+    );
+  });
+
+  it("allows configured production origins with trimmed comma-separated values", async () => {
+    const productionOrigin = "https://frontend.example.test";
+    const response = await request(
+      createApp(
+        ` ${productionOrigin}, https://preview.example.test `,
+      ),
+    )
+      .get("/health")
+      .set("Origin", productionOrigin);
+
+    expect(response.status).toBe(200);
+    expect(response.headers["access-control-allow-origin"]).toBe(
+      productionOrigin,
+    );
+  });
+
+  it("rejects an unauthorized browser origin clearly", async () => {
+    const response = await request(
+      createApp("https://frontend.example.test"),
+    )
+      .get("/health")
+      .set("Origin", "https://unauthorized.example.test");
+
+    expect(response.status).toBe(403);
+    expect(response.body).toEqual({
+      error: {
+        code: "CORS_ORIGIN_DENIED",
+        message: "This request origin is not allowed.",
+      },
+    });
+    expect(
+      response.headers["access-control-allow-origin"],
+    ).toBeUndefined();
+  });
+
+  it("allows requests without an Origin header", async () => {
+    const response = await request(
+      createApp("https://frontend.example.test"),
+    ).get("/health");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("ok");
   });
 
   it("rejects a missing departure query", async () => {

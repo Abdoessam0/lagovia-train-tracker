@@ -1,7 +1,11 @@
 import type { DeparturesSearchResult } from "../types/departure";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL?.trim() ||
+  "http://localhost:3000";
+
 const DEPARTURES_API_URL =
-  "http://localhost:3000/api/departures";
+  `${API_BASE_URL.replace(/\/+$/, "")}/api/departures`;
 
 interface ErrorResponse {
   error?: {
