@@ -6,6 +6,13 @@ Lagovia Train Tracker is a full-stack railway information application built for 
 
 The React frontend consumes a single Express feature endpoint. The backend retrieves live station and departure data from the public [iRail API](https://docs.irail.be/), filters it against one shared request timestamp, and returns normalized results grouped by origin station.
 
+## Live Demo
+
+- Frontend: https://lagovia-train-tracker.vercel.app
+- Backend API: https://lagovia-train-tracker-api.vercel.app
+- Health Check: https://lagovia-train-tracker-api.vercel.app/health
+- Example Search: https://lagovia-train-tracker-api.vercel.app/api/departures?q=Bru
+
 ## Features
 
 - Case-insensitive substring station search
